@@ -30,110 +30,73 @@ contract EasySwapVault is IEasySwapVault, OwnableUpgradeable {
         orderBook = newOrderBook;
     }
 
-    function balanceOf(
-        OrderKey orderKey
-    ) external view returns (uint256 ETHAmount, uint256 tokenId) {
+    function balanceOf(OrderKey orderKey) external view returns (uint256 ETHAmount, uint256 tokenId) {
         ETHAmount = ETHBalance[orderKey];
         tokenId = NFTBalance[orderKey];
     }
 
-    function depositETH(
-        OrderKey orderKey,
-        uint256 ETHAmount
-    ) external payable onlyEasySwapOrderBook {
+    function depositETH(OrderKey orderKey, uint256 ETHAmount) external payable onlyEasySwapOrderBook {
         require(msg.value >= ETHAmount, "HV: not match ETHAmount");
         ETHBalance[orderKey] += msg.value;
     }
 
-    function withdrawETH(
-        OrderKey orderKey,
-        uint256 ETHAmount,
-        address to
-    ) external onlyEasySwapOrderBook {
+    function withdrawETH(OrderKey orderKey, uint256 ETHAmount, address to) external onlyEasySwapOrderBook {
         ETHBalance[orderKey] -= ETHAmount;
         to.safeTransferETH(ETHAmount);
     }
 
-    function depositNFT(
-        OrderKey orderKey,
-        address from,
-        address collection,
-        uint256 tokenId
-    ) external onlyEasySwapOrderBook {
+    function depositNFT(OrderKey orderKey, address from, address collection, uint256 tokenId)
+        external
+        onlyEasySwapOrderBook
+    {
         IERC721(collection).safeTransferNFT(from, address(this), tokenId);
 
         NFTBalance[orderKey] = tokenId;
     }
 
-    function withdrawNFT(
-        OrderKey orderKey,
-        address to,
-        address collection,
-        uint256 tokenId
-    ) external onlyEasySwapOrderBook {
+    function withdrawNFT(OrderKey orderKey, address to, address collection, uint256 tokenId)
+        external
+        onlyEasySwapOrderBook
+    {
         require(NFTBalance[orderKey] == tokenId, "HV: not match tokenId");
         delete NFTBalance[orderKey];
 
         IERC721(collection).safeTransferNFT(address(this), to, tokenId);
     }
 
-    function editETH(
-        OrderKey oldOrderKey,
-        OrderKey newOrderKey,
-        uint256 oldETHAmount,
-        uint256 newETHAmount,
-        address to
-    ) external payable onlyEasySwapOrderBook {
+    function editETH(OrderKey oldOrderKey, OrderKey newOrderKey, uint256 oldETHAmount, uint256 newETHAmount, address to)
+        external
+        payable
+        onlyEasySwapOrderBook
+    {
         ETHBalance[oldOrderKey] = 0;
         if (oldETHAmount > newETHAmount) {
             ETHBalance[newOrderKey] = newETHAmount;
             to.safeTransferETH(oldETHAmount - newETHAmount);
         } else if (oldETHAmount < newETHAmount) {
-            require(
-                msg.value >= newETHAmount - oldETHAmount,
-                "HV: not match newETHAmount"
-            );
+            require(msg.value >= newETHAmount - oldETHAmount, "HV: not match newETHAmount");
             ETHBalance[newOrderKey] = msg.value + oldETHAmount;
         } else {
             ETHBalance[newOrderKey] = oldETHAmount;
         }
     }
 
-    function editNFT(
-        OrderKey oldOrderKey,
-        OrderKey newOrderKey
-    ) external onlyEasySwapOrderBook {
+    function editNFT(OrderKey oldOrderKey, OrderKey newOrderKey) external onlyEasySwapOrderBook {
         NFTBalance[newOrderKey] = NFTBalance[oldOrderKey];
         delete NFTBalance[oldOrderKey];
     }
 
-    function transferERC721(
-        address from,
-        address to,
-        LibOrder.Asset calldata assets
-    ) external onlyEasySwapOrderBook {
+    function transferERC721(address from, address to, LibOrder.Asset calldata assets) external onlyEasySwapOrderBook {
         IERC721(assets.collection).safeTransferNFT(from, to, assets.tokenId);
     }
 
-    function batchTransferERC721(
-        address to,
-        LibOrder.NFTInfo[] calldata assets
-    ) external {
+    function batchTransferERC721(address to, LibOrder.NFTInfo[] calldata assets) external {
         for (uint256 i = 0; i < assets.length; ++i) {
-            IERC721(assets[i].collection).safeTransferNFT(
-                _msgSender(),
-                to,
-                assets[i].tokenId
-            );
+            IERC721(assets[i].collection).safeTransferNFT(_msgSender(), to, assets[i].tokenId);
         }
     }
 
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes memory
-    ) public virtual returns (bytes4) {
+    function onERC721Received(address, address, uint256, bytes memory) public virtual returns (bytes4) {
         return this.onERC721Received.selector;
     }
 

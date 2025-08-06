@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.19;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
@@ -33,7 +33,6 @@ contract EasySwapOrderBook is
     using LibTransferSafeUpgradeable for address;
     using LibTransferSafeUpgradeable for IERC721;
 
-    // ================ events ================
     event LogMake(
         OrderKey orderKey,
         LibOrder.Side indexed side,
@@ -59,7 +58,6 @@ contract EasySwapOrderBook is
     event BatchMatchInnerError(uint256 offset, bytes msg);
     event LogSkipOrder(OrderKey orderKey, uint64 salt);
 
-    // ================ modifier ================
     modifier onlyDelegateCall() {
         _checkDelegateCall();
         _;
@@ -131,7 +129,7 @@ contract EasySwapOrderBook is
         returns (OrderKey[] memory newOrderKeys)
     {
         uint256 orderAmount = newOrders.length;
-        newOrderKeys = new OrderKey[](orderAmount); // 每个order的hash
+        newOrderKeys = new OrderKey[](orderAmount);
 
         uint128 ETHAmount; // total eth amount
         for (uint256 i = 0; i < orderAmount; ++i) {
@@ -169,7 +167,7 @@ contract EasySwapOrderBook is
     {
         successes = new bool[](orderKeys.length);
 
-        for (uint256 i = 0; i < orderKeys.length; i++) {
+        for (uint256 i = 0; i < orderKeys.length; ++i) {
             bool success = _cancelOrderTry(orderKeys[i]);
             successes[i] = success;
         }
@@ -205,9 +203,6 @@ contract EasySwapOrderBook is
         }
     }
 
-    /**
-     * 匹配order
-     */
     function matchOrder(LibOrder.Order calldata sellOrder, LibOrder.Order calldata buyOrder)
         external
         payable
@@ -295,14 +290,12 @@ contract EasySwapOrderBook is
 
             // deposit asset to vault
             if (order.side == LibOrder.Side.List) {
-                // 卖方
                 if (order.nft.amount != 1) {
                     // limit list order amount to 1
                     return LibOrder.ORDERKEY_SENTINEL;
                 }
                 IEasySwapVault(_vault).depositNFT(newOrderKey, order.maker, order.nft.collection, order.nft.tokenId);
             } else if (order.side == LibOrder.Side.Bid) {
-                // 买方
                 if (order.nft.amount == 0) {
                     return LibOrder.ORDERKEY_SENTINEL;
                 }

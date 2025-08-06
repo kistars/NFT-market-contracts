@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.19;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
@@ -36,15 +36,15 @@ abstract contract OrderValidator is Initializable, ContextUpgradeable, EIP712Upg
      * @param isSkipExpiry  Skip expiry check if true.
      */
     function _validateOrder(LibOrder.Order memory order, bool isSkipExpiry) internal view {
-        // Order must have a maker
+        // Order must have a maker.
         require(order.maker != address(0), "OVa: miss maker");
+        // Order must be started and not be expired.
 
-        // Order must be started and not be expired
         if (!isSkipExpiry) {
+            // Skip expiry check if true.
             require(order.expiry == 0 || order.expiry > block.timestamp, "OVa: expired");
         }
-
-        // require salt cannot be 0
+        // Order salt cannot be 0.
         require(order.salt != 0, "OVa: zero salt");
 
         if (order.side == LibOrder.Side.List) {
@@ -60,10 +60,10 @@ abstract contract OrderValidator is Initializable, ContextUpgradeable, EIP712Upg
      * @return orderFilledAmount Has completed fill amount of sell order (0 if order is unfilled).
      */
     function _getFilledAmount(OrderKey orderKey) internal view returns (uint256 orderFilledAmount) {
-        // get has completed fill amount
+        // Get has completed fill amount.
         orderFilledAmount = filledAmount[orderKey];
-        // cancelled order cannot be matched
-        require(orderFilledAmount != CANCELLED, "OVa: cancelled");
+        // Cancelled order cannot be matched.
+        require(orderFilledAmount != CANCELLED, "OVa: canceled");
     }
 
     /**
@@ -72,7 +72,7 @@ abstract contract OrderValidator is Initializable, ContextUpgradeable, EIP712Upg
      * @param orderKey  The hash of the order.
      */
     function _updateFilledAmount(uint256 newAmount, OrderKey orderKey) internal {
-        require(newAmount != CANCELLED, "OVa: cancelled");
+        require(newAmount != CANCELLED, "OVa: canceled");
         filledAmount[orderKey] = newAmount;
     }
 

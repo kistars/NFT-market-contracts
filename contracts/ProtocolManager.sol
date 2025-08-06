@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+
+pragma solidity ^0.8.19;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import {LibPayInfo} from "./libraries/LibPayInfo.sol";
 
-// 管理协议费的模块
-contract ProtocolManager is Initializable, OwnableUpgradeable {
+abstract contract ProtocolManager is Initializable, OwnableUpgradeable {
     uint128 public protocolShare;
 
     event LogUpdatedProtocolShare(uint128 indexed newProtocolShare);
